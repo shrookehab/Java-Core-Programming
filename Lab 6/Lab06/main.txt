@@ -1,0 +1,38 @@
+public static void main(String args[])
+		{
+			///////////////////////task1/////////////////////////////
+		CountryDao countryDao= InMemoryWorldDao.getInstance();
+		List<City> highPopulatedCitiesOfCountries = countryDao.findAllCountries()
+                .stream()
+                .map( country -> country.getCities().stream().max(Comparator.comparing(City::getPopulation)))
+				.flatMap(Optional::stream)
+                .collect(Collectors.toList());
+		highPopulatedCitiesOfCountries.forEach(System.out::println);
+		System.out.println("\n///////////////////////////////////////////////////////////////////////////////\n\n\n");
+		
+	//////////////////////task2//////////////////////////////
+		CountryDao countryDao1 = InMemoryWorldDao.getInstance();
+        final Predicate<Entry<String, Optional<City>>> isPresent = entry -> entry.getValue().isPresent();
+        final BiConsumer<String, Optional<City>> printEntry =
+                (k,v) -> {
+                    City city = v.get();
+                    System.out.println(k + ": City [ name= " + city.getName() + ", population= " + city.getPopulation() + " ]");
+                };
+        Collector<City, ?, Map<String, Optional<City>>> groupingHighPopulatedCitiesByContinent = Collectors.groupingBy(city -> countryDao1.findCountryByCode(city.getCountryCode()).getContinent(), Collectors.maxBy(Comparator.comparing(City::getPopulation)));
+        Map<String, Optional<City>> highPopulatedCitiesByContinent = countryDao1.findAllCountries()
+                .stream()
+                .flatMap(country -> country.getCities().stream())
+                .collect(groupingHighPopulatedCitiesByContinent);
+        highPopulatedCitiesByContinent.forEach(printEntry);
+		System.out.println("\n///////////////////////////////////////////////////////////////////////////////\n\n\n");
+///////////////////////////////task3//////////////////////////////////
+		CountryDao countryDao2 = InMemoryWorldDao.getInstance();
+        CityDao cityDao = InMemoryWorldDao.getInstance();
+        Optional<City> capital = countryDao2.findAllCountries()
+                .stream()
+                .map(Country::getCapital)
+                .map(cityDao::findCityById)
+                .filter(Objects::nonNull)
+                .collect(maxBy(comparing(City::getPopulation)));
+        capital.ifPresent(out::println);
+		}
